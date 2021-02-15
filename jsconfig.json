@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "allowSyntheticDefaultImports": false,
+    "baseUrl": "",
+    "paths": {
+      "@mongo": [
+        "./src/mongo"
+      ],
+      "@utils": [
+        "./src/utils/index.js"
+      ],
+      "@lodash": [
+        "./src/utils/lodash/index.js"
+      ],
+      "@GET": [
+        "./src/GET"
+      ],
+      "@CREATE": [
+        "./src/CREATE"
+      ],
+      "@UPDATE": [
+        "./src/UPDATE"
+      ],
+      "@DELETE": [
+        "./src/DELETE"
+      ],
+      "@COMMON": [
+        "./src/COMMON"
+      ],
+      "@models": [
+        "./src/mongo/models",
+      ],
+      "@test-utils": [
+        "./__tests__/COMMON/utils/index.js"
+      ],
+      "@TEST-COMMON": [
+        "./__tests__/COMMON"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
