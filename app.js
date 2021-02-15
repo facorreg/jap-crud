@@ -1,15 +1,13 @@
 import Koa from 'koa';
 import koaBody from 'koa-body';
 import Router from 'koa-router';
-import { flattenDeep, uniq } from 'lodash';
+import { flattenDeep, uniq, first } from 'lodash';
 
 import createWord from '@CREATE/word';
-// import getKaExamplesByIds from '@GET/get-ka-examples-by-ids';
-// import getWordNameList from '@GET/get-word-name-list';
-// import getKanji from '@GET/kanji';
-// import getKanjis from '@GET/kanjis';
+import getKanjis from '@GET/kanjis';
 import getWord from '@GET/word';
 import Jword from '@models/jword.model';
+import Kanji from '@models/kanji.model';
 import connect from '@mongo/connect';
 import { getEnv, filterEmpty } from '@utils';
 
@@ -28,31 +26,47 @@ router.get('/word/word-name-list', async (ctx) => {
 
 router.get('/word/:word?', async (ctx) => {
   try {
-    ctx.body = await getWord(ctx.params.word);
+    const { word } = ctx.params;
+    if (!word.trim()) {
+      ctx.body = { error: 'A word is required' };
+      ctx.status = 400;
+
+      return;
+    }
+    ctx.body = await getWord(word);
   } catch (err) {
     ctx.body = { error: err.message };
     ctx.status = 500; // conflict
   }
 });
 
-// router.get('/kanji/kanji-list', async (ctx) => {
-//   // todo: fix multiple occurences
-//   ctx.body = uniq((await getKanjis()).map(({ character }) => character));
-// });
+router.get('/kanji/kanji-list', async (ctx) => {
+  const allKanjis = await Kanji.find({});
+  const wordNames = uniq(allKanjis.map(({ character }) => character));
+  ctx.body = wordNames;
+});
 
-// router.get('/kanji/:kanji-by-ids', async (ctx) => {
-//   const { ids } = ctx.query;
-//   ctx.body = await getKanjis(isArray(ids) ? ids : [ids]);
-// });
+router.get('/kanji/:kanji?', async (ctx) => {
+  // @todo check si c'est un kanji
+  try {
+    const { kanji } = ctx.params;
+    if (!kanji) {
+      ctx.body = { error: 'A Kanji is required' };
+      ctx.status = 400;
+      return;
+    }
+    if (kanji.replace(/[一-龯々〆〤]/)) {
+      ctx.body = { error: `${kanji} is not kanji or is composed of several kanjis` };
+      ctx.status = 400;
+      return;
+    }
+    ctx.body = first(await getKanjis([kanji]));
+  } catch (err) {
+    ctx.body = { error: err.message };
+    ctx.status = 500; // conflict
+  }
+});
 
-// router.get('/kanji/:kanji?', async (ctx) => {
-//   // @todo check si c'est un kanji
-//   ctx.body = await getKanji(ctx.params.kanji);
-// });
-// router.get('/examples', async (ctx) => {
-//   const { ids } = ctx.query;
-//   ctx.body = await getKaExamplesByIds(isArray(ids) ? ids : [ids]);
-// });
 router.put('/word', koaBody(), async (ctx) => {
   try {
     const word = ctx?.request?.body?.word;
