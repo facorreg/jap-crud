@@ -1,8 +1,8 @@
-import { uniq } from 'lodash';
+import { uniq, omit } from 'lodash';
 
 import KaExample from '@models/ka-example.model';
 import Kanji from '@models/kanji.model';
-import { promesify, insertMany } from '@utils';
+import { promesify, insertMany, deMongoize } from '@utils';
 
 import getKanjiAlive from './get-kanji-alive-api';
 import getKanjiApi from './get-kanji-api';
@@ -61,7 +61,7 @@ const createKanji = async (kanji) => {
     const newKanji = new Kanji({ exampleIds: insertedIds, ...parsed });
     await newKanji.save();
 
-    return Promise.resolve(newKanji);
+    return Promise.resolve(omit({ ...deMongoize(newKanji), examples }, ['exampleIds']));
   } catch (err) {
     return promesify(false, 'Failed to fetch kanji');
   }

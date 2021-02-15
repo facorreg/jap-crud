@@ -5,7 +5,7 @@ const kanjiSchema = mongoose.Schema({
     type: String,
     unique: true,
   },
-  examples: [mongoose.Schema.Types.ObjectId],
+  exampleIds: [mongoose.Schema.Types.ObjectId],
   kunyomi: String,
   meaning: String,
   onyomi: String,
