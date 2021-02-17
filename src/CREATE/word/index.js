@@ -4,6 +4,7 @@ import { isKanji } from 'wanakana';
 
 import createKanji from '@CREATE/kanji';
 import getJword from '@GET/jword';
+import getExamplesQuery from '@es/schemas/get-examples.query';
 import Jword from '@models/jword.model';
 import Sense from '@models/sense.model';
 import Word from '@models/word.model';
@@ -25,26 +26,51 @@ export const getJishoData = async (word) => {
   }
 };
 
-const senseParser = ({ english_definitions: ed, parts_of_speech: pos, tags = [] }) => {
+const getExamples = async (japanese, definitions, esClient) => {
+  try {
+    const japaneseList = uniq(
+      flattenDeep(japanese.map(({ reading, word }) => filterEmpty([word, reading]))),
+    );
+    const enList = definitions.map((def) => def.replace(/[(,].*$/, ''));
+
+    const searchResults = await esClient.search(getExamplesQuery(japaneseList, enList));
+
+    return Promise.resolve(searchResults?.body?.hits?.hits?.map(({ _source: src }) => src));
+  } catch (err) {
+    return promesify(false, 'Failed to get examples from ES');
+  }
+};
+
+const senseParser = async (
+  { english_definitions: ed, parts_of_speech: pos, tags = [] },
+  japanese,
+  esClient,
+) => {
   const isWiki = pos.find((t) => t.toLowerCase().includes('wikipedia'));
 
   if (isWiki) return null;
 
   return {
     definitions: ed?.join(', '),
-    examples: [],
+    examples: await getExamples(japanese, ed, esClient),
     partsOfSpeech: pos?.join(', '),
     tags: tags?.join(', '),
   };
 };
 
-const saveAndGetIds = async (jwords, senses, kanjis) => {
+const saveAndGetIds = async (jwords, rawSenses, kanjis) => {
   const getIds = (arr) => arr.map(({ _id: id }) => id);
 
   const { insertedIds: jWordIds } = await insertMany(Jword, jwords, ({ reading, word }) =>
     // eslint-disable-next-line no-use-before-define
     Jword.findOne({ reading, word }),
   );
+
+  const senses = rawSenses.map(({ examples, ...rest }) => ({
+    ...rest,
+    examples: examples.map(({ mongoId }) => mongoId),
+  }));
+
   const { insertedIds: senseIds } = await insertMany(Sense, senses, ({ definitions }) =>
     Sense.findOne({ definitions }),
   );
@@ -54,7 +80,7 @@ const saveAndGetIds = async (jwords, senses, kanjis) => {
   return [jWordIds, senseIds, kanjiIds];
 };
 
-const createWord = async (word) => {
+const createWord = async (word, esClient) => {
   const localData = await getJword(word, word);
 
   if (localData?.length) return promesify(false, `${word} already exists`);
@@ -71,7 +97,9 @@ const createWord = async (word) => {
           ),
         );
 
-        const senses = filterEmpty(rawSenses?.map(senseParser));
+        const senses = filterEmpty(
+          await Promise.all(rawSenses?.map((sense) => senseParser(sense, japanese, esClient))),
+        );
 
         const kanjiWithin = uniq(
           flattenDeep(
@@ -92,6 +120,8 @@ const createWord = async (word) => {
       }),
     );
   } catch (err) {
+    console.log(err);
+
     return promesify(false, 'Failed to create Word');
   }
 };

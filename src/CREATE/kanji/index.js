@@ -1,5 +1,6 @@
-import { uniq, omit } from 'lodash';
+import { uniq, omit, first } from 'lodash';
 
+import getKanjis from '@GET/kanjis';
 import KaExample from '@models/ka-example.model';
 import Kanji from '@models/kanji.model';
 import { promesify, insertMany, deMongoize } from '@utils';
@@ -52,6 +53,8 @@ const parseKanjiData = ([kanjiAlive, kanjiApi]) => {
 
 const createKanji = async (kanji) => {
   try {
+    const localKanji = first(await getKanjis([kanji]));
+    if (localKanji) return localKanji;
     const kanjiData = await getKanjiData(kanji);
     const { examples, ...parsed } = parseKanjiData(kanjiData);
     const { insertedIds } = await insertMany(KaExample, examples || [], ({ furigana, word }) =>
@@ -63,7 +66,8 @@ const createKanji = async (kanji) => {
 
     return Promise.resolve(omit({ ...deMongoize(newKanji), examples }, ['exampleIds']));
   } catch (err) {
-    return promesify(false, 'Failed to fetch kanji');
+    console.log(err);
+    return promesify(false, 'Failed to create kanji');
   }
 };
 

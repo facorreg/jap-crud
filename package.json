@@ -38,13 +38,11 @@
       "^@CREATE(.*)$": "<rootDir>/src/CREATE$1",
       "^@UPDATE(.*)$": "<rootDir>/src/UPDATE$1",
       "^@DELETE(.*)$": "<rootDir>/src/DELETE$1",
-      "^@COMMON(.*)$": "<rootDir>/src/COMMON$1",
-      "^@lodash(.*)$": "<rootDir>/src/utils/lodash/index.js",
       "^@mongo(.*)$": "<rootDir>/src/mongo$1",
       "^@models(.*)$": "<rootDir>/src/mongo/models$1",
       "^@utils(.*)$": "<rootDir>/src/utils/index.js",
-      "^@test-utils(.*)$": "<rootDir>/__tests__/COMMON/utils/index.js",
-      "^@TEST-COMMON(.*)$": "<rootDir>/__tests__/COMMON$1"
+      "^@es/schemas(.*)$": "<rootDir>/src/elastic/schemas/$1",
+      "^@es$": "<rootDir>/src/elastic/index.js"
     },
     "testEnvironment": "node",
     "testRegex": "\\/__tests__\\/(.*\\/).*(\\.test).js",
@@ -97,13 +95,16 @@
     "webpack-cli": "^4.2.0"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^7.11.0",
     "axios": "^0.21.1",
+    "cli-progress": "^3.9.0",
     "dotenv": "^8.2.0",
     "getenv": "^1.0.0",
     "koa": "^2.13.1",
     "koa-body": "^4.2.0",
     "koa-bodyparser": "^4.3.0",
     "koa-router": "^10.0.0",
+    "kuromoji": "^0.1.2",
     "lodash": "^4.17.20",
     "mongoose": "^5.11.12",
     "wanakana": "^4.0.2"

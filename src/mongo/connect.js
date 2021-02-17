@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
-const connect = (db) =>
-  mongoose.connect(`mongodb://localhost/${db}`, {
+const connect = (db, createCo = false) =>
+  mongoose[createCo ? 'createConnection' : 'connect'](`mongodb://localhost/${db}`, {
     useCreateIndex: true,
     useFindAndModify: false,
     useNewUrlParser: true,

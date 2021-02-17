@@ -10,6 +10,8 @@ const config = {
       '@DELETE': path.resolve(__dirname, 'src/DELETE'),
       '@GET': path.resolve(__dirname, 'src/GET'),
       '@UPDATE': path.resolve(__dirname, 'src/UPDATE'),
+      '@es/schemas': path.resolve(__dirname, 'src/elastic/schemas'),
+      '@es': path.resolve(__dirname, 'src/elastic/index.js'),
       '@models': path.resolve(__dirname, 'src/mongo/models'),
       '@mongo': path.resolve(__dirname, 'src/mongo'),
       '@utils': path.resolve(__dirname, 'src/utils/index.js'),
