@@ -8,7 +8,7 @@ import getExamplesQuery from '@es/schemas/get-examples.query';
 import Jword from '@models/jword.model';
 import Sense from '@models/sense.model';
 import Word from '@models/word.model';
-import { promesify, getEnv, filterEmpty, insertMany } from '@utils';
+import { promesify, getEnv, filterEmpty, insertMany, tokenize } from '@utils';
 
 export const getJishoData = async (word) => {
   try {
@@ -52,7 +52,7 @@ const senseParser = async (
 
   return {
     definitions: ed?.join(', '),
-    examples: await getExamples(japanese, ed, esClient),
+    examples: await getExamples(japanese, ed, esClient).catch(() => []),
     partsOfSpeech: pos?.join(', '),
     tags: tags?.join(', '),
   };
@@ -68,7 +68,7 @@ const saveAndGetIds = async (jwords, rawSenses, kanjis) => {
 
   const senses = rawSenses.map(({ examples, ...rest }) => ({
     ...rest,
-    examples: examples.map(({ mongoId }) => mongoId),
+    examples: examples?.map(({ mongoId }) => mongoId),
   }));
 
   const { insertedIds: senseIds } = await insertMany(Sense, senses, ({ definitions }) =>
@@ -116,7 +116,16 @@ const createWord = async (word, esClient) => {
         const newWord = await new Word({ isCommon, jwordIds, kanjiIds, senseIds });
         await newWord.save();
 
-        return { japanese: jwords, kanjis, senses };
+        return {
+          japanese: jwords,
+          kanjis,
+          senses: await Promise.all(
+            senses.map(async ({ examples, ...rest }) => ({
+              examples: await tokenize(examples),
+              ...rest,
+            })),
+          ),
+        };
       }),
     );
   } catch (err) {

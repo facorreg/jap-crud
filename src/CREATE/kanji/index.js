@@ -1,9 +1,10 @@
 import { uniq, omit, first } from 'lodash';
 
+// eslint-disable-next-line import/no-cycle
 import getKanjis from '@GET/kanjis';
 import KaExample from '@models/ka-example.model';
 import Kanji from '@models/kanji.model';
-import { promesify, insertMany, deMongoize } from '@utils';
+import { promesify, insertMany, deMongoize, getInCollection } from '@utils';
 
 import getKanjiAlive from './get-kanji-alive-api';
 import getKanjiApi from './get-kanji-api';
@@ -53,8 +54,8 @@ const parseKanjiData = ([kanjiAlive, kanjiApi]) => {
 
 const createKanji = async (kanji) => {
   try {
-    const localKanji = first(await getKanjis([kanji]));
-    if (localKanji) return localKanji;
+    const localKanji = await getInCollection(Kanji, [kanji], 'character');
+    if (localKanji?.length) return first(getKanjis([localKanji]));
     const kanjiData = await getKanjiData(kanji);
     const { examples, ...parsed } = parseKanjiData(kanjiData);
     const { insertedIds } = await insertMany(KaExample, examples || [], ({ furigana, word }) =>
